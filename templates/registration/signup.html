@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Criar conta{% endblock %}
+{% block content %}<section class="form-shell panel auth-card"><p class="eyebrow">UM NOVO COMEÇO</p><h1>Seu dinheiro, mais claro.</h1><p>Crie sua conta. As categorias já ficam prontas para você.</p><form method="post" data-submit-form>{% csrf_token %}{% include 'components/fields.html' %}<button class="button full" type="submit">Criar minha conta</button></form><p class="auth-switch">Já tem conta? <a href="{% url 'login' %}">Entrar</a></p></section>{% endblock %}

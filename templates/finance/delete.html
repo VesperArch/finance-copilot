@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}<section class="form-shell panel"><p class="eyebrow">CONFIRMAÇÃO</p><h1>{{ title }}</h1><p>Você está prestes a excluir <strong>{{ object }}</strong>.</p>{% if installment_group %}<p>Todas as parcelas desta compra serão excluídas, inclusive as de meses anteriores. Seus saldos e orçamentos serão recalculados.</p>{% endif %}<p>Esta ação não pode ser desfeita.</p><form method="post" data-submit-form>{% csrf_token %}<div class="form-actions"><button class="button danger" type="submit">Confirmar exclusão</button><a class="button secondary" href="{% url kind|add:'-list' %}">Cancelar</a></div></form></section>{% endblock %}

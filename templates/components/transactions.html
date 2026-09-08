@@ -1,0 +1,13 @@
+{% load money %}
+{% for item in objects %}
+<article class="transaction-row">
+    <span class="transaction-icon {{ item.type|lower }}" aria-hidden="true">{% if item.type == 'INCOME' %}↙{% elif item.type == 'TRANSFER' %}⇄{% else %}↗{% endif %}</span>
+    <div class="transaction-copy"><strong>{{ item.description }}</strong><small>{{ item.category.name|default:'Transferência' }} · {{ item.account.name }} · {{ item.date|date:'d/m/Y' }}</small>
+        {% if item.installment_group_id %}<a class="small-link" href="{% url 'installment-detail' item.installment_group_id %}">Parcela {{ item.installment.number }}/{{ item.installment.group.count }} · Ver compra</a>{% endif %}
+    </div>
+    <div class="transaction-value"><strong class="{{ item.type|lower }}">{% if item.type == 'INCOME' %}+{% elif item.type == 'EXPENSE' %}−{% endif %} {{ item.amount|brl }}</strong><small>{{ item.get_type_display }}</small></div>
+    {% if actions %}<div class="row-actions">{% if not item.installment_group_id %}<a href="{% url 'transaction-edit' item.pk %}" aria-label="Editar {{ item.description }}">Editar</a><a href="{% url 'transaction-delete' item.pk %}" aria-label="Excluir {{ item.description }}">Excluir</a>{% endif %}</div>{% endif %}
+</article>
+{% empty %}
+<div class="empty"><span class="empty-symbol" aria-hidden="true">↗</span><h3>Ainda não há movimentações neste mês.</h3><p>Adicione uma entrada ou gasto para começar a entender seu dinheiro.</p><a class="button" href="{% url 'transaction-create' %}">Adicionar movimentação</a></div>
+{% endfor %}

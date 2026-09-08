@@ -1,0 +1,7 @@
+{% load money l10n %}
+<article class="budget-item">
+    <div class="row-heading"><strong>{{ row.budget.category.name }}</strong><span class="badge {% if row.warning %}warning{% endif %}">{{ row.status }}</span></div>
+    <div class="row-heading"><span>{{ row.used|brl }} de {{ row.budget.limit_amount|brl }}</span><strong>{{ row.percentage|floatformat:0 }}%</strong></div>
+    <progress value="{{ row.bar|unlocalize }}" max="100" aria-label="Orçamento de {{ row.budget.category.name }} utilizado">{{ row.percentage|floatformat:0 }}%</progress>
+    <div class="row-heading"><small>Restante: {{ row.remaining|brl }}</small><a href="{% url 'budget-edit' row.budget.pk %}">Ajustar limite</a></div>
+</article>

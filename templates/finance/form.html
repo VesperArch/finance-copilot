@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="form-shell"><a class="back-link" href="{% url kind|add:'-list' %}">← Voltar</a><div class="page-heading"><div><p class="eyebrow">UM PASSO DE CADA VEZ</p><h1>{{ title }}</h1><p>{% if kind == 'transaction' %}Informe os dados e confirme para salvar.{% else %}Deixe tudo pronto para acompanhar seu dinheiro.{% endif %}</p></div></div>
+<form method="post" class="panel edit-form" data-submit-form>{% csrf_token %}{% include 'components/fields.html' %}<div class="form-actions"><button class="button" type="submit">Confirmar e salvar</button><a class="button secondary" href="{% url kind|add:'-list' %}">Cancelar</a></div></form></div>
+{% endblock %}

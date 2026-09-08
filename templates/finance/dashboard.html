@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load money %}
+{% block title %}Início{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">SEU PANORAMA FINANCEIRO</p><h1>Olá, {{ user.first_name|default:user.username }}.</h1><p>Um olhar tranquilo para o seu dinheiro.</p></div>{% include 'components/month.html' %}</div>
+{% if not has_accounts %}<section class="welcome-panel"><div><h2>Seu primeiro passo é simples.</h2><p>Adicione uma conta e o saldo que você já tem. Suas categorias estão prontas.</p></div><a class="button" href="{% url 'account-create' %}">Adicionar primeira conta</a></section>{% endif %}
+<section class="metrics" aria-label="Resumo financeiro">
+    <article class="metric featured"><span>Saldo disponível hoje</span><strong>{{ balance|brl }}</strong><small>Saldo inicial + movimentações até hoje</small></article>
+    <article class="metric"><span>Entradas do mês</span><strong class="income">{{ income|brl }}</strong><small>{{ month_date|date:'F \d\e Y' }} · inclui previstas</small></article>
+    <article class="metric"><span>Gastos do mês</span><strong>{{ expenses|brl }}</strong><small>Inclui as parcelas previstas no mês</small></article>
+    <article class="metric"><span>Orçamento utilizado</span><strong>{{ budget_percentage|floatformat:0 }}<span class="unit">%</span></strong><small>{{ budget_used|brl }} de {{ budget_limit|brl }}</small></article>
+</section>
+<section class="insight"><span class="insight-icon" aria-hidden="true">✧</span><div><p class="eyebrow">ESPAÇO PARA PLANEJAR</p>{% if daily != None %}<h2>Aproximadamente {{ daily|brl }} por dia.</h2><p>É o que resta nos seus orçamentos até o fim do mês. Estimativa apenas para categorias com limite definido; não representa dinheiro disponível na conta.</p>{% else %}<h2>Um limite claro deixa o mês mais leve.</h2><p>Defina quanto quer gastar por categoria e acompanhe o que ainda resta.</p>{% endif %}</div><a href="{% url 'budget-create' %}">Planejar gastos <span aria-hidden="true">→</span></a></section>
+<div class="dashboard-grid"><section class="panel"><div class="section-heading"><div><p class="eyebrow">SEUS LIMITES</p><h2>Planejamento do mês</h2></div><a href="{% url 'budget-list' %}">Ver todos</a></div>{% for row in budget_rows %}{% include 'components/budget.html' %}{% empty %}<div class="empty"><h3>Cada categoria pode ter um plano.</h3><p>Comece por alimentação, lazer ou uma categoria que você queira acompanhar.</p><a class="button secondary" href="{% url 'budget-create' %}">Criar primeiro orçamento</a></div>{% endfor %}</section>
+<section class="panel"><div class="section-heading"><div><p class="eyebrow">ONDE SEU DINHEIRO FOI</p><h2>Gastos por categoria</h2></div></div>{% for category in categories %}<div class="category-total"><span>{{ category.category__name }}</span><strong>{{ category.total|brl }}</strong></div>{% if forloop.first %}<p class="help">{{ category.category__name }} é a maior categoria de gastos no mês selecionado.</p>{% endif %}{% empty %}<div class="empty"><h3>Seu resumo aparece aqui.</h3><p>Ao registrar um gasto, você verá como ele se distribui entre suas categorias.</p></div>{% endfor %}</section></div>
+<section class="panel recent"><div class="section-heading"><div><p class="eyebrow">ACOMPANHE DE PERTO</p><h2>Últimas movimentações</h2></div><a href="{% url 'transaction-list' %}">Ver todas</a></div>{% include 'components/transactions.html' with objects=recent %}</section>
+{% endblock %}

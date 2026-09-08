@@ -1,0 +1,5 @@
+<form method="get" class="month-picker">
+    <label for="{{ month_form.month.id_for_label }}">Mês de referência</label>
+    <div>{{ month_form.month }}<button type="submit" class="button secondary small">Ver mês</button></div>
+    {{ month_form.month.errors }}
+</form>
