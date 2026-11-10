@@ -1,6 +1,7 @@
 from django.db import transaction
 
 from apps.finance.models import Category, FinancialSpace
+from apps.accounts.models import Membership, Role
 
 
 DEFAULT_CATEGORIES = {
@@ -12,6 +13,7 @@ DEFAULT_CATEGORIES = {
 @transaction.atomic
 def create_personal_space(user):
     space = FinancialSpace.objects.create(owner=user)
+    Membership.objects.create(financial_space=space, user=user, role=Role.ADMIN)
     Category.objects.bulk_create([
         Category(financial_space=space, name=name, type=kind)
         for kind, names in DEFAULT_CATEGORIES.items() for name in names

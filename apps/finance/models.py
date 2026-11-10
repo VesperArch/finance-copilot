@@ -10,7 +10,7 @@ from django.utils import timezone
 
 class FinancialSpace(models.Model):
     name = models.CharField("Nome", max_length=100, default="Pessoal")
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="financial_spaces")
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="financial_spaces")
     currency = models.CharField("Moeda", max_length=3, default="BRL", editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -29,6 +29,11 @@ class SpaceRecord(models.Model):
 
     class Meta:
         abstract = True
+
+    def clean(self):
+        super().clean()
+        if self.pk and type(self).objects.filter(pk=self.pk).exclude(financial_space_id=self.financial_space_id).exists():
+            raise ValidationError({"financial_space": "Não é permitido mover registros entre organizações."})
 
 
 class Account(SpaceRecord):
@@ -137,11 +142,18 @@ class Transaction(SpaceRecord):
     def clean(self):
         super().clean()
         errors = {}
+        previous = Transaction.objects.filter(pk=self.pk).first() if self.pk else None
+        if previous and previous.user_id != self.user_id:
+            errors["user"] = "O autor original do lançamento deve ser preservado."
         for field in ("account", "destination_account", "category", "installment_group"):
             related = getattr(self, field) if getattr(self, f"{field}_id") else None
             if related and related.financial_space_id != self.financial_space_id:
                 errors[field] = "Escolha um registro do seu espaço financeiro."
-        if self.user_id and self.financial_space_id and self.financial_space.owner_id != self.user_id:
+            if related and hasattr(related, "active") and not related.active:
+                if previous is None or getattr(previous, f"{field}_id") != related.pk:
+                    errors[field] = "Escolha um registro ativo para novas associações."
+        # Preserve authorship even after a member leaves the organization.
+        if self.user_id and self.financial_space_id and not self.pk and not self.financial_space.memberships.filter(user_id=self.user_id).exists():
             errors["user"] = "Este usuário não tem acesso ao espaço financeiro."
         if self.type == self.Type.TRANSFER:
             if not self.destination_account_id or self.destination_account_id == self.account_id:
