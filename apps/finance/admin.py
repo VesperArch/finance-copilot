@@ -25,6 +25,14 @@ class FinancialSpaceAdmin(SuperuserAdmin):
     list_display = ["name", "owner", "currency"]
     search_fields = ["name", "owner__username"]
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    readonly_fields = ["owner", "currency", "created_at"]
+
 
 @admin.register(Account)
 class AccountAdmin(SuperuserAdmin):
