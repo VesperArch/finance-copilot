@@ -2,7 +2,7 @@ from calendar import monthrange
 from datetime import date
 from decimal import Decimal
 
-from django.db.models import Q, Sum
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.budgets.services import budget_progress
@@ -29,6 +29,7 @@ def account_balances(space):
 def dashboard_summary(space, year, month):
     entries = Transaction.objects.filter(financial_space=space, date__year=year, date__month=month)
     totals = entries.aggregate(
+        transaction_count=Count("pk"),
         income=Sum("amount", filter=Q(type=Transaction.Type.INCOME)),
         expenses=Sum("amount", filter=Q(type=Transaction.Type.EXPENSE)),
     )
@@ -42,6 +43,8 @@ def dashboard_summary(space, year, month):
     return {
         "balance": sum((account.balance for account in account_balances(space)), ZERO),
         "income": totals["income"] or ZERO, "expenses": totals["expenses"] or ZERO,
+        "result": (totals["income"] or ZERO) - (totals["expenses"] or ZERO),
+        "transaction_count": totals["transaction_count"],
         "budget_rows": rows, "budget_limit": limit, "budget_used": used,
         "budget_percentage": used * 100 / limit if limit else ZERO,
         "daily": daily, "month_date": date(year, month, 1),
