@@ -25,6 +25,12 @@
         {% else %}<a class="button secondary small" href="{% url 'login' %}">Entrar</a>{% endif %}
     </div>
 </header>
+{% if space_memberships %}
+<div class="container organization-context">
+    {% if current_membership %}<p>Organização: <strong>{{ current_membership.financial_space.name }}</strong> · {{ current_membership.get_role_display }}{% if current_membership.role == 'ADMIN' %} · <a href="{% url 'organization' %}">Gerenciar organização</a>{% endif %}</p>{% else %}<p>Selecione uma organização disponível para continuar.</p>{% endif %}
+    {% if space_memberships|length > 1 or not current_membership %}<details {% if not current_membership %}open{% endif %}><summary>Trocar organização</summary>{% for membership in space_memberships %}<form action="{% url 'space-switch' membership.financial_space_id %}" method="post">{% csrf_token %}<button class="text-button" type="submit">{{ membership.financial_space.name }}</button></form>{% endfor %}</details>{% endif %}
+</div>
+{% endif %}
 <main id="content" class="container" tabindex="-1">
     {% if messages %}<div class="messages" aria-live="polite">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
     {% block content %}{% endblock %}
