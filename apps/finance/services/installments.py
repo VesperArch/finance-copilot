@@ -17,8 +17,11 @@ def monthly_date(first_date, offset):
 
 
 @transaction.atomic
-def save_transaction(entry, count=1):
-    if entry.pk and entry.installment_group_id:
+def save_transaction(entry, count=1, *, actor=None):
+    if actor is not None:
+        from apps.core.access import current_membership
+        current_membership(actor, entry.financial_space_id)
+    if entry.pk and Transaction.objects.filter(pk=entry.pk, installment_group__isnull=False).exists():
         raise ValidationError("Para alterar esta compra, exclua o parcelamento completo e cadastre novamente.")
     entry.full_clean()
     if not 1 <= count <= 120:
@@ -43,6 +46,7 @@ def save_transaction(entry, count=1):
             financial_space=entry.financial_space, user=entry.user,
             account=entry.account, category=entry.category, type=entry.type,
             description=entry.description, notes=entry.notes,
+            source=entry.source,
             amount=regular if offset < count - 1 else total - regular * (count - 1),
             date=monthly_date(entry.date, offset), installment_group=group,
         )

@@ -10,11 +10,12 @@ from django.utils import timezone
 from apps.budgets.forms import BudgetForm
 from apps.budgets.models import Budget
 from apps.budgets.services import budget_progress
-from apps.core.access import personal_space
+from apps.core.access import request_space
 from apps.core.forms import MonthForm
 from apps.finance.forms import AccountForm, CategoryForm, TransactionForm
 from apps.finance.models import Account, Category, InstallmentGroup, Transaction
 from apps.finance.services.installments import save_transaction
+from apps.finance.services.records import delete_record, save_record
 from apps.finance.services.summary import account_balances, dashboard_summary
 
 
@@ -35,7 +36,7 @@ def selected_month(request):
 
 @login_required
 def dashboard(request):
-    space = personal_space(request.user)
+    space = request_space(request)
     month_form, month = selected_month(request)
     context = dashboard_summary(space, month.year, month.month)
     context.update({"month_form": month_form, "has_accounts": Account.objects.filter(financial_space=space, active=True).exists()})
@@ -45,7 +46,7 @@ def dashboard(request):
 @login_required
 def resource_list(request, kind):
     model, _, title, singular = RESOURCES[kind]
-    space = personal_space(request.user)
+    space = request_space(request)
     queryset = model.objects.filter(financial_space=space)
     context = {"kind": kind, "title": title, "singular": singular}
     if kind == "account":
@@ -66,7 +67,7 @@ def resource_list(request, kind):
 @login_required
 def resource_edit(request, kind, pk=None):
     model, form_class, _, singular = RESOURCES[kind]
-    space = personal_space(request.user)
+    space = request_space(request)
     instance = get_object_or_404(model, pk=pk, financial_space=space) if pk else None
     if kind == "transaction" and instance and instance.installment_group_id:
         messages.info(request, "As parcelas mantêm os valores da compra original. Para corrigir, exclua a compra e cadastre novamente.")
@@ -79,9 +80,9 @@ def resource_edit(request, kind, pk=None):
         try:
             with transaction.atomic():
                 if kind == "transaction":
-                    entry = save_transaction(form.save(commit=False), form.cleaned_data["installments"])
+                    entry = save_transaction(form.save(commit=False), form.cleaned_data["installments"], actor=request.user)
                 else:
-                    form.save()
+                    save_record(form.save(commit=False), request.user)
         except ValidationError as error:
             form.add_error(None, error.messages)
         except IntegrityError:
@@ -97,12 +98,12 @@ def resource_edit(request, kind, pk=None):
 @login_required
 def resource_delete(request, kind, pk):
     model, _, _, singular = RESOURCES[kind]
-    obj = get_object_or_404(model, pk=pk, financial_space=personal_space(request.user))
+    obj = get_object_or_404(model, pk=pk, financial_space=request_space(request))
     if kind == "transaction" and obj.installment_group_id:
         return redirect("installment-detail", pk=obj.installment_group_id)
     if request.method == "POST":
         try:
-            obj.delete()
+            delete_record(obj, request.user)
         except ProtectedError:
             messages.error(request, "Este registro está em uso. Você pode desativá-lo para preservar seu histórico.")
         else:
@@ -113,16 +114,16 @@ def resource_delete(request, kind, pk):
 
 @login_required
 def installment_detail(request, pk):
-    group = get_object_or_404(InstallmentGroup, pk=pk, financial_space=personal_space(request.user))
+    group = get_object_or_404(InstallmentGroup, pk=pk, financial_space=request_space(request))
     return render(request, "finance/installments.html", {"group": group, "payments": group.installments.select_related("transaction", "transaction__account")})
 
 
 @login_required
 def installment_delete(request, pk):
-    group = get_object_or_404(InstallmentGroup, pk=pk, financial_space=personal_space(request.user))
+    group = get_object_or_404(InstallmentGroup, pk=pk, financial_space=request_space(request))
     if request.method == "POST":
         with transaction.atomic():
-            group.delete()
+            delete_record(group, request.user)
         messages.success(request, "Compra e todas as parcelas excluídas.")
         return redirect("transaction-list")
     return render(request, "finance/delete.html", {"object": group, "kind": "transaction", "title": "Excluir compra parcelada", "installment_group": True})

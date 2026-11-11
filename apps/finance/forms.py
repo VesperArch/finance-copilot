@@ -40,7 +40,8 @@ class TransactionForm(SpaceForm):
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
-        self.instance.user = user
+        if not self.instance.pk:
+            self.instance.user = user
         if self.instance.pk:
             self.fields["installments"].disabled = True
         self.fields["category"].help_text = "Escolha uma categoria do mesmo tipo. Deixe vazia para transferências."

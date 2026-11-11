@@ -34,6 +34,8 @@ class Budget(SpaceRecord):
                 raise ValidationError({"category": "Escolha uma categoria do seu espaço financeiro."})
             if self.category.type != Category.Type.EXPENSE:
                 raise ValidationError({"category": "Planeje seus limites em categorias de gastos."})
+            if not self.category.active and not Budget.objects.filter(pk=self.pk, category_id=self.category_id).exists():
+                raise ValidationError({"category": "Escolha uma categoria ativa para um novo orçamento."})
 
     def __str__(self):
         return f"{self.category.name} · {self.month:02d}/{self.year}"
