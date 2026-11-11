@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Organização{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">ADMINISTRAÇÃO</p><h1>{{ space.name }}</h1><p>Membros compartilham os registros financeiros desta organização.</p></div></div>
+<div class="organization-panels">
+<section class="panel"><h2>Configurações</h2><form method="post">{% csrf_token %}<input type="hidden" name="action" value="rename">{% include 'components/fields.html' with form=settings_form %}<button class="button" type="submit">Confirmar nome</button></form></section>
+<section class="panel"><h2>Membros</h2>{% for member in members %}<p>{{ member.user.username }} · {{ member.get_role_display }}{% if member.user_id == space.owner_id %} · Proprietário{% else %} · <a href="{% url 'member-edit' member.pk %}">Gerenciar membro</a>{% endif %}</p>{% endfor %}</section>
+<section class="panel"><h2>Convidar membro</h2><p>O acesso só começa após a pessoa aceitar o convite com sua própria conta.</p><form method="post">{% csrf_token %}<input type="hidden" name="action" value="invite">{% include 'components/fields.html' with form=invite_form %}<button class="button" type="submit">Criar convite</button></form>{% if invitation_url %}<p class="invitation-link">Link do convite: <a href="{{ invitation_url }}">{{ invitation_url }}</a></p>{% endif %}</section>
+</div>
+{% endblock %}

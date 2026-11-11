@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Convite{% endblock %}
+{% block content %}<section class="form-shell panel"><h1>Convite para {{ invitation.financial_space.name }}</h1><p>Você foi convidado como {{ invitation.get_role_display }}. Ao aceitar, terá acesso aos dados financeiros desta organização.</p>{% if error %}<p role="alert">{{ error }}</p>{% endif %}<form method="post">{% csrf_token %}<button class="button" type="submit">Confirmar e aceitar convite</button></form></section>{% endblock %}
